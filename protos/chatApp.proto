@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package chatAppOpenAI;
+
+service ChatApp {
+    rpc SendQuery (stream Query) returns (stream Response) {}
+}
+
+message Query{
+    string prompt = 1;
+}
+
+message Response{
+    string text = 1;
+}
