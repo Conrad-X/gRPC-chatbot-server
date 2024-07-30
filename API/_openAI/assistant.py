@@ -1,8 +1,10 @@
+import os
 from openai import OpenAI
 import tiktoken
 from dotenv import load_dotenv
 from typing_extensions import override
 from openai import AssistantEventHandler
+
 
 _MODEL = "gpt-4o-mini"
 
@@ -69,8 +71,8 @@ class EventHandler(AssistantEventHandler):
 
 
 class ConradAssitant:
-    assistant_id = "asst_i1ni4xVblTLM0ITk6jHNEF4G"
-    thread_id = "thread_0jZGzNJTT6eNK4RMXjx6QZWB"
+    assistant_id = os.environ["ASSISTANT_V2"]
+    thread_id = os.environ["THREAD_ID"]
 
     def __init__(self):
         self.client = client
@@ -136,7 +138,25 @@ def main():
                     4- Do not contain any asterisk or inverted commas (single or double) or quotations in your response.\
                     5- If you do not understand the user\'s query, respond "Sorry, I am unable to answer your query, please clarify your query with regard to Conrad Labs"\
                     6- If a user asks a query that does not relate to Conrad Labs, respond "Sorry, I am unable to answer your query, please clarify your query with regard to Conrad Labs"',
-        tools=None,
+        tools=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_song_title",
+                    "description": "Returns a superhero name based on the integer parameter 'songnum'",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "songnum": {
+                                "type": "integer",
+                                "description": "An integer for indexing",
+                            },
+                        },
+                        "required": ["songnum"],
+                    },
+                },
+            }
+        ],
     )
 
     #     tools=[
