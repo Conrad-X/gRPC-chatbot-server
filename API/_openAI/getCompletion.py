@@ -15,7 +15,7 @@ def getChatCompletion(prompt):
     completion = client.chat.completions.create(
                 model=_MODEL,
                 messages=[
-                    {"role": "system", "content": "You are a helpful chatbot that speaks like scripture."},
+                    {"role": "system", "content": "You are a helpful chatbot that answers in 2 lines max in form of a paragraph."},
                     {"role": "user", "content": prompt}
                 ],
                 stream=True
@@ -23,7 +23,7 @@ def getChatCompletion(prompt):
     for chunk in completion:
         if chunk.choices[0].delta.content != None:
             responseText += chunk.choices[0].delta.content
-        if(len(encoding.encode(responseText)) > 5):
+        if(len(encoding.encode(responseText)) > 6):
             yield responseText
             responseText = ""
     responseText += "\n"
