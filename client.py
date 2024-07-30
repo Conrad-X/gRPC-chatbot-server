@@ -3,6 +3,7 @@ import time
 from protoc import chatApp_pb2
 from protoc import chatApp_pb2_grpc
 from API._google.speechToText import main
+from API._google.textToSpeechx import textToSpeech
  
 start = 0.0
 
@@ -28,6 +29,7 @@ def client():
         responses = stub.SendQuery(getClientQueries())
         for response in responses:
             print(response.text, end="", flush=True)
+            textToSpeech(response.text)
             
         endTime = time.time() - start
         print("Response took: {0} s.".format(endTime))

@@ -8,9 +8,9 @@ class ChatAppServicer(chatApp_pb2_grpc.ChatAppServicer):
     def SendQuery(self, request_iterator, context):
         for request in request_iterator:
             # print("--- Recieved From Client: " + request.prompt + " ----")
-            text_characters = getChatCompletion(request.prompt)
-            for char in text_characters:
-                response = chatApp_pb2.Response(text=char)
+            tokens = getChatCompletion(request.prompt)
+            for token in tokens:
+                response = chatApp_pb2.Response(text=token)
                 yield response
 
 def server():
