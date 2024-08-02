@@ -4,54 +4,20 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from typing_extensions import override
 from openai import AssistantEventHandler
-
+from api.simplistc.functions import post_leave
+import tiktoken
 
 _MODEL = "gpt-4o-mini"
 
 load_dotenv()
 client = OpenAI()
+encoding = tiktoken.encoding_for_model(_MODEL)
 
 
-class EventHandler(AssistantEventHandler):
-    @override
-    def on_text_created(self, text) -> None:
-        print(f"assistant > ", end="", flush=True)
-
-    @override
-    def on_text_delta(self, delta, snapshot):
-        print(delta.value, end="", flush=True)
-
-    @override
-    def on_event(self, event):
-        # Retrieve events that are denoted with 'requires_action'
-        # since these will have our tool_calls
-        if event.event == "thread.run.requires_action":
-            # Retrieve the run ID from the event data
-            run_id = event.data.id
-            self.handle_requires_action(event.data, run_id)
-
-    def handle_requires_action(self, data, run_id):
-        tool_outputs = []
-
-        for tool in data.required_action.submit_tool_outputs.tool_calls:
-            if tool.function.name == "log_leave_request":
-                # extract arguments from the tool_call
-                args = json.loads(tool.function.arguments)
-                leave_status = log_leave_request(args)
-                tool_outputs.append({"tool_call_id": tool.id, "output": leave_status})
-
-        # Submit all tool_outputs at the same time
-        self.submit_tool_outputs(tool_outputs, run_id)
-
-    def submit_tool_outputs(self, tool_outputs, run_id):
-        # Use the submit_tool_outputs_stream helper
-        with client.beta.threads.runs.submit_tool_outputs_stream(
-            thread_id=self.current_run.thread_id,
-            run_id=self.current_run.id,
-            tool_outputs=tool_outputs,
-            event_handler=EventHandler(),
-        ) as stream:
-            stream.until_done()
+def log_leave_request(args):
+    if post_leave(args) == 200:
+        return "Success"
+    return "Error Occured"
 
 
 class ConradAssitant:
@@ -64,7 +30,6 @@ class ConradAssitant:
         self.assistant = None
         self.thread = None
         self.run = None
-        self.summary = None
 
         if ConradAssitant.assistant_id:
             self.assistant = self.client.beta.assistants.retrieve(
@@ -100,22 +65,65 @@ class ConradAssitant:
 
     def run_assistant(self, instructions):
         if self.assistant and self.thread:
-            with self.client.beta.threads.runs.stream(
+            responseText = ""
+            run_stream = self.client.beta.threads.runs.stream(
                 thread_id=self.thread.id,
                 assistant_id=self.assistant.id,
                 instructions=instructions,
-                event_handler=EventHandler(),
-            ) as stream:
-                stream.until_done()
+            )
+            response_stream = self.eventHandler(run_stream)
+            for text_deltas in response_stream:
+                responseText += text_deltas
+                if len(encoding.encode(responseText)) > 6:
+                    yield responseText
+                    responseText = ""
+            if responseText != "":
+                yield responseText
+
+    def eventHandler(self, run_stream):
+        with run_stream as stream:
+            for event in stream:
+                if event.event == "thread.run.created":
+                    self.run = event.data.id
+                elif event.event == "thread.message.delta":
+                    print(event.data.delta.content[0].text.value, end="", flush=True)
+                    yield event.data.delta.content[0].text.value
+                elif event.event == "thread.run.requires_action":
+                    tool_outputs = []
+                    for (
+                        tool
+                    ) in event.data.required_action.submit_tool_outputs.tool_calls:
+                        if tool.function.name == "log_leave_request":
+                            arguments = json.loads(tool.function.arguments)
+                            leave_status = log_leave_request(arguments)
+                            tool_outputs.append(
+                                {"tool_call_id": tool.id, "output": leave_status}
+                            )
+                        submit_tool_stream = (
+                            client.beta.threads.runs.submit_tool_outputs_stream(
+                                thread_id=self.thread.id,
+                                run_id=self.run,
+                                tool_outputs=tool_outputs,
+                            )
+                        )
+                        for text in self.eventHandler(submit_tool_stream):
+                            yield text
 
 
-def main():
-    ca = ConradAssitant()
+# def main():
+#     ca = ConradAssitant()
 
-    while True:
-        text = input("\nme > ")
-        ca.add_message_to_thread(role="user", content=text)
-        ca.run_assistant(instructions=None)
+#     # client.beta.threads.runs.cancel(
+#     #     thread_id=ca.thread_id, run_id="run_AcdCG35EwLKaixxNqyRTbdN1"
+#     # )
+
+#     while True:
+#         text = input("\nme > ")
+#         ca.add_message_to_thread(role="user", content=text)
+#         gen = ca.run_assistant(instructions=None)
+#         for text in gen:
+#             for chars in text:
+#                 print(chars, end="", flush=True)
 
 
-main()
+# main()
