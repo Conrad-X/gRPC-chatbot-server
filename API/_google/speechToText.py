@@ -1,4 +1,3 @@
-
 import queue
 import re
 import sys
@@ -7,11 +6,13 @@ import os
 from google.cloud import speech
 
 import pyaudio
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "API/_google/credentials.json"
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/_google/credentials.json"
 
 # Audio recording parameters
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
+
 
 class MicrophoneStream:
     """Opens a recording stream as a generator yielding the audio chunks."""
@@ -181,7 +182,7 @@ def main() -> None:
     prompt = None
 
     """Transcribe speech from audio file."""
-    language_code = "en-US" 
+    language_code = "en-US"
 
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
@@ -191,7 +192,9 @@ def main() -> None:
     )
 
     streaming_config = speech.StreamingRecognitionConfig(
-        config=config, interim_results=True, single_utterance = True,
+        config=config,
+        interim_results=True,
+        single_utterance=True,
     )
 
     with MicrophoneStream(RATE, CHUNK) as stream:

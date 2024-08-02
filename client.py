@@ -2,24 +2,26 @@ import grpc
 import time
 from protoc import chatApp_pb2
 from protoc import chatApp_pb2_grpc
-from API._google.speechToText import main
-from API._google.textToSpeechx import textToSpeech
- 
+from api._google.speechToText import main
+from api._google.textToSpeech import textToSpeech
+
 start = 0.0
+
 
 def getClientQueries():
     global start
 
     while True:
         input_type = input("1- Audio\n2-Text\nChoice: ")
-        if(input_type == "1"):
+        if input_type == "1":
             userPrompt = main()
         else:
             userPrompt = input("Enter your prompt: ")
 
         start = time.time()
-        request = chatApp_pb2.Query(prompt = userPrompt)
+        request = chatApp_pb2.Query(prompt=userPrompt)
         yield request
+
 
 def client():
     global start
@@ -30,9 +32,10 @@ def client():
         for response in responses:
             print(response.text, end="", flush=True)
             textToSpeech(response.text)
-            
+
         endTime = time.time() - start
         print("Response took: {0} s.".format(endTime))
+
 
 if __name__ == "__main__":
     client()
