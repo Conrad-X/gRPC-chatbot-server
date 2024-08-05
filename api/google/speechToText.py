@@ -4,7 +4,7 @@ import queue
 import pyaudio
 from google.cloud import speech
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/_google/credentials.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/google/credentials.json"
 
 # Audio recording parameters
 RATE = 16000

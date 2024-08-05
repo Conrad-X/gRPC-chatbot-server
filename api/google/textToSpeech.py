@@ -4,7 +4,7 @@ import threading
 import pyaudio
 from google.cloud import texttospeech
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/_google/credentials.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/google/credentials.json"
 
 # Audio queue to store syntesized speech as a stream
 audio_queue = queue.Queue()

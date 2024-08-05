@@ -2,8 +2,8 @@ import grpc
 from concurrent import futures
 import protoc.chatApp_pb2_grpc as chatApp_pb2_grpc
 import protoc.chatApp_pb2 as chatApp_pb2
-from api._openAI.getCompletion import getChatCompletion
-from api._openAI.assistant import ConradAssitant
+from api.openAI.getCompletion import getChatCompletion
+from api.openAI.assistant import ConradAssitant
 
 ca = ConradAssitant()
 

@@ -1,8 +1,8 @@
 import grpc
 from protoc import chatApp_pb2
 from protoc import chatApp_pb2_grpc
-from api._google.speechToText import get_speech_prompt
-from api._google.textToSpeech import textToSpeech
+from api.google.speechToText import get_speech_prompt
+from api.google.textToSpeech import textToSpeech
 
 
 def getClientQueries():
