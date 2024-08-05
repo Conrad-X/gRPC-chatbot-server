@@ -7,11 +7,11 @@ import pyaudio
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/_google/credentials.json"
 
-# audio queue to store syntesized speech as a stream
+# Audio queue to store syntesized speech as a stream
 audio_queue = queue.Queue()
 
 
-# open a stream with pyaudio to be played on a worker thread
+# Open a stream with pyaudio to be played on a worker thread
 def play_audio():
     player = pyaudio.PyAudio()
     stream = player.open(
