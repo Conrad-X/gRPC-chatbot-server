@@ -1,11 +1,11 @@
 import os
 import json
-from openai import OpenAI
-from dotenv import load_dotenv
-from typing_extensions import override
-from openai import AssistantEventHandler
-from api.simplistc.functions import post_leave
 import tiktoken
+from openai import OpenAI
+from datetime import date
+from dotenv import load_dotenv
+from api.simplistic.functions import post_leave
+
 
 _MODEL = "gpt-4o-mini"
 
@@ -70,6 +70,7 @@ class ConradAssitant:
                 thread_id=self.thread.id,
                 assistant_id=self.assistant.id,
                 instructions=instructions,
+                additional_instructions=f"Today's Date is: {date.today()}.Ensure that all date-related calculations and confirmations are based on this reference date.",
             )
             response_stream = self.eventHandler(run_stream)
             for text_deltas in response_stream:
@@ -99,31 +100,10 @@ class ConradAssitant:
                             tool_outputs.append(
                                 {"tool_call_id": tool.id, "output": leave_status}
                             )
-                        submit_tool_stream = (
-                            client.beta.threads.runs.submit_tool_outputs_stream(
+                            with client.beta.threads.runs.submit_tool_outputs_stream(
                                 thread_id=self.thread.id,
                                 run_id=self.run,
                                 tool_outputs=tool_outputs,
-                            )
-                        )
-                        for text in self.eventHandler(submit_tool_stream):
-                            yield text
-
-
-# def main():
-#     ca = ConradAssitant()
-
-#     # client.beta.threads.runs.cancel(
-#     #     thread_id=ca.thread_id, run_id="run_AcdCG35EwLKaixxNqyRTbdN1"
-#     # )
-
-#     while True:
-#         text = input("\nme > ")
-#         ca.add_message_to_thread(role="user", content=text)
-#         gen = ca.run_assistant(instructions=None)
-#         for text in gen:
-#             for chars in text:
-#                 print(chars, end="", flush=True)
-
-
-# main()
+                            ) as stream:
+                                for text in stream.text_deltas:
+                                    yield text
