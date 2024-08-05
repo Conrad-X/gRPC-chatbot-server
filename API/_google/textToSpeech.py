@@ -1,9 +1,8 @@
 import os
 import queue
 import threading
-from io import BytesIO
-from google.cloud import texttospeech
 import pyaudio
+from google.cloud import texttospeech
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/_google/credentials.json"
 
