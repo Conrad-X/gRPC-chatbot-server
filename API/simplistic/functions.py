@@ -33,5 +33,5 @@ def post_leave(args):
     request_payload["startDate"] = args["start-date"]
     request_payload["endDate"] = args["end-date"]
     request_payload["duration"] = args["duration"]
-    response = requests.post(url, json=request_payload)
+    response = requests.post(url, json=request_payload, headers=headers)
     return response.status_code
