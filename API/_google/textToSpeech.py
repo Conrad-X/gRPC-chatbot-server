@@ -1,15 +1,17 @@
 import os
 import queue
-import pygame
 import threading
 from io import BytesIO
 from google.cloud import texttospeech
 import pyaudio
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/_google/credentials.json"
 
+# audio queue to store syntesized speech as a stream
 audio_queue = queue.Queue()
 
 
+# open a stream with pyaudio to be played on a worker thread
 def play_audio():
     player = pyaudio.PyAudio()
     stream = player.open(
@@ -24,16 +26,15 @@ def play_audio():
             stream.write(audio_queue.get())
 
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/_google/credentials.json"
+# Start the worker thread
+worker_thread = threading.Thread(target=play_audio, daemon=True)
+worker_thread.start()
 
 
 # Instantiates a client
 client = texttospeech.TextToSpeechClient()
 
-# Set the text input to be synthesized
-
-# Build the voice request, select the language code ("en-US") and the ssml
-# voice gender ("neutral")
+# Build the voice request, select the language code ("en-US")
 voice = texttospeech.VoiceSelectionParams(
     language_code="en-US", name="en-GB-Standard-A"
 )
@@ -44,36 +45,14 @@ audio_config = texttospeech.AudioConfig(
     speaking_rate=1.2,
 )
 
-# Create a queue for temperory audio files generated
 
 # Perform the text-to-speech request on the text input with the selected
 # voice parameters and audio file type
-
-
 def textToSpeech(textToSpeak):
+    if not textToSpeak[0].isalnum() and textToSpeak[0] != " ":
+        textToSpeak = textToSpeak[1:]
     synthesis_input = texttospeech.SynthesisInput(text=textToSpeak)
     response = client.synthesize_speech(
         input=synthesis_input, voice=voice, audio_config=audio_config
     )
     audio_queue.put(bytes(response.audio_content))
-
-
-# def play_audio():
-#     while True:
-#         audio_file = audio_queue.get()
-#         if audio_file is None:
-#             continue
-
-#         pygame.mixer.music.load(audio_file, "mp3")
-#         # Play the audio
-#         pygame.mixer.music.play()
-
-#         # Wait for the audio to finish playing
-#         while pygame.mixer.music.get_busy():
-#             pygame.time.Clock().tick(5)
-
-
-# Start the worker thread
-worker_thread = threading.Thread(target=play_audio, daemon=True)
-worker_thread.start()
-# pygame.mixer.init()
