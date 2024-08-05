@@ -1,11 +1,8 @@
-import queue
-import re
-import sys
 import os
-
-from google.cloud import speech
-
+import sys
+import queue
 import pyaudio
+from google.cloud import speech
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "api/_google/credentials.json"
 
@@ -15,7 +12,7 @@ CHUNK = int(RATE / 10)  # 100ms
 
 
 class MicrophoneStream:
-    """Opens a recording stream as a generator yielding the audio chunks."""
+    # Opens a recording stream as a generator yielding the audio chunks.
 
     def __init__(self: object, rate: int = RATE, chunk: int = CHUNK) -> None:
 
@@ -50,7 +47,6 @@ class MicrophoneStream:
         value: object,
         traceback: object,
     ) -> None:
-        """Closes the stream, regardless of whether the connection was lost or not."""
         self._audio_stream.stop_stream()
         self._audio_stream.close()
         self.closed = True
@@ -66,29 +62,12 @@ class MicrophoneStream:
         time_info: object,
         status_flags: object,
     ) -> object:
-        """Continuously collect data from the audio stream, into the buffer.
-
-        Args:
-            in_data: The audio data as a bytes object
-            frame_count: The number of frames captured
-            time_info: The time information
-            status_flags: The status flags
-
-        Returns:
-            The audio data as a bytes object
-        """
+        # Continuously collect data from the audio stream, into the buffer.
         self._buff.put(in_data)
         return None, pyaudio.paContinue
 
     def generator(self: object) -> object:
-        """Generates audio chunks from the stream of audio data in chunks.
-
-        Args:
-            self: The MicrophoneStream object
-
-        Returns:
-            A generator that outputs audio chunks.
-        """
+        # Generates audio chunks from the stream of audio data in chunks.
         while not self.closed:
             # Use a blocking get() to ensure there's at least one chunk of
             # data, and stop iteration if the chunk is None, indicating the
@@ -112,26 +91,9 @@ class MicrophoneStream:
 
 
 def listen_print_loop(responses: object) -> str:
-    """Iterates through server responses and prints them.
-
-    The responses passed is a generator that will block until a response
-    is provided by the server.
-
-    Each response may contain multiple results, and each result may contain
-    multiple alternatives; for details, see https://goo.gl/tjCPAU.  Here we
-    print only the transcription for the top alternative of the top result.
-
-    In this case, responses are provided for interim results as well. If the
-    response is an interim one, print a line feed at the end of it, to allow
-    the next result to overwrite it, until the response is a final one. For the
-    final one, print a newline to preserve the finalized transcription.
-
-    Args:
-        responses: List of server responses
-
-    Returns:
-        The transcribed text.
-    """
+    # Iterates through server responses and prints them.
+    # The responses passed is a generator that will block until a response
+    # is provided by the server.
     num_chars_printed = 0
     finalTranscript = ""
 
@@ -139,9 +101,6 @@ def listen_print_loop(responses: object) -> str:
         if not response.results:
             continue
 
-        # The `results` list is consecutive. For streaming, we only care about
-        # the first result being considered, since once it's `is_final`, it
-        # moves on to considering the next utterance.
         result = response.results[0]
         if not result.alternatives:
             continue
@@ -167,21 +126,12 @@ def listen_print_loop(responses: object) -> str:
 
             break
 
-            # Exit recognition if any of the transcribed phrases could be
-            # one of our keywords.
-            # if re.search(r"\b(exit|quit)\b", transcript, re.I):
-            #     print("Exiting..")
-
-            # num_chars_printed = 0
-
     return finalTranscript
 
 
-def main() -> None:
+def get_speech_prompt():
 
     prompt = None
-
-    """Transcribe speech from audio file."""
     language_code = "en-US"
 
     client = speech.SpeechClient()
@@ -206,11 +156,7 @@ def main() -> None:
 
         responses = client.streaming_recognize(streaming_config, requests)
 
-        # Now, put the transcription responses to use.
+        # getting the transcription
         prompt = listen_print_loop(responses)
 
     return prompt
-
-
-if __name__ == "__main__":
-    main()
